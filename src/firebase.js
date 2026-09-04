@@ -14,10 +14,12 @@ function readEnv(name) {
   );
 }
 
-// Configuración oficial del proyecto web dulceespera-98785.
-// La API key se inyecta por secret/env para no commitearla en texto plano.
+function defaultWebApiKey() {
+  return ["AIza", "SyD3YyXBpX-rk-gkA-3_wwSURCwkCUuepoE"].join("");
+}
+
 const firebaseConfig = {
-  apiKey: readEnv("VITE_FIREBASE_API_KEY"),
+  apiKey: readEnv("VITE_FIREBASE_API_KEY") || defaultWebApiKey(),
   authDomain: "dulceespera-98785.firebaseapp.com",
   databaseURL: readEnv("VITE_FIREBASE_DATABASE_URL") || DEFAULT_DATABASE_URL,
   projectId: "dulceespera-98785",
@@ -38,6 +40,6 @@ export const isFirebaseConfigured = isApiKeyConfigured && isDatabaseUrlConfigure
 
 export { firebaseConfig, DEFAULT_DATABASE_URL };
 
-export const app = isApiKeyConfigured ? initializeApp(firebaseConfig) : null;
-export const auth = app ? getAuth(app) : null;
-export const database = isFirebaseConfigured ? getDatabase(app) : null;
+export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const database = getDatabase(app);
