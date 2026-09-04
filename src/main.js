@@ -244,7 +244,16 @@ async function boot() {
     await ensureAnonymousUser();
   } catch (error) {
     console.error(error);
-    renderError("No pudimos entrar de forma anónima. Revisá que Anonymous Authentication esté habilitada.");
+    const code = String(error?.code || error?.message || "");
+    if (code.includes("admin-restricted-operation")) {
+      renderError(
+        "Firebase bloqueó el ingreso anónimo. En Authentication → Sign-in method habilitá Anonymous, y en Authentication → Settings → Authorized domains agregá dulceespera.nrdonline.site."
+      );
+      return;
+    }
+    renderError(
+      "No pudimos entrar de forma anónima. Revisá que Anonymous Authentication esté habilitada."
+    );
   }
 }
 
