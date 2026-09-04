@@ -13,10 +13,18 @@ export const GUEST_NAME_KEY = "dulceespera_guest_name";
 const MAX_RESERVE_RETRIES = 3;
 
 export function listenAuth(callback) {
+  if (!auth) {
+    return () => {};
+  }
+
   return onAuthStateChanged(auth, callback);
 }
 
 export async function ensureAnonymousUser() {
+  if (!auth) {
+    throw new Error("AUTH");
+  }
+
   if (auth.currentUser) {
     return auth.currentUser;
   }

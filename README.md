@@ -205,7 +205,8 @@ El UID no se muestra al invitado. Si recarga el mismo navegador, Firebase mantie
 2. Settings → Secrets and variables → Actions. Creá:
    - `VITE_FIREBASE_API_KEY`
    - `VITE_FIREBASE_DATABASE_URL`
-3. Settings → Pages → Source: **GitHub Actions**.
+3. Settings → Pages → Build and deployment → Source: **GitHub Actions**.
+   No uses "Deploy from a branch" sobre `main`. Eso publica el código fuente y rompe Firebase (`firebase/app`) y el manifest.
 4. El workflow `.github/workflows/deploy-pages.yml` construye y publica `dist` en cada push a `main`.
 
 No hace falta Node, PHP ni un VPS en producción.

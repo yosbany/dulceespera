@@ -4,7 +4,6 @@ import { getDatabase } from "firebase/database";
 
 const DEFAULT_DATABASE_URL =
   "https://dulceespera-98785-default-rtdb.firebaseio.com";
-const PLACEHOLDER_API_KEY = "PEGAR_AQUI_FIREBASE_API_KEY";
 
 function readEnv(name) {
   return (
@@ -15,20 +14,19 @@ function readEnv(name) {
   );
 }
 
+// Configuración oficial del proyecto web dulceespera-98785.
+// La API key se inyecta por secret/env para no commitearla en texto plano.
 const firebaseConfig = {
-  apiKey: readEnv("VITE_FIREBASE_API_KEY") || PLACEHOLDER_API_KEY,
+  apiKey: readEnv("VITE_FIREBASE_API_KEY"),
   authDomain: "dulceespera-98785.firebaseapp.com",
+  databaseURL: readEnv("VITE_FIREBASE_DATABASE_URL") || DEFAULT_DATABASE_URL,
   projectId: "dulceespera-98785",
   storageBucket: "dulceespera-98785.firebasestorage.app",
   messagingSenderId: "549764450384",
   appId: "1:549764450384:web:b454c4111edff5f575a955",
-  databaseURL: readEnv("VITE_FIREBASE_DATABASE_URL") || DEFAULT_DATABASE_URL,
 };
 
-export const isApiKeyConfigured = Boolean(
-  firebaseConfig.apiKey && firebaseConfig.apiKey !== PLACEHOLDER_API_KEY
-);
-
+export const isApiKeyConfigured = Boolean(firebaseConfig.apiKey);
 export const isDatabaseUrlConfigured = Boolean(
   firebaseConfig.databaseURL &&
     /^https:\/\/.+\.(firebaseio\.com|firebasedatabase\.app)$/.test(
@@ -40,6 +38,6 @@ export const isFirebaseConfigured = isApiKeyConfigured && isDatabaseUrlConfigure
 
 export { firebaseConfig, DEFAULT_DATABASE_URL };
 
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const database = isDatabaseUrlConfigured ? getDatabase(app) : null;
+export const app = isApiKeyConfigured ? initializeApp(firebaseConfig) : null;
+export const auth = app ? getAuth(app) : null;
+export const database = isFirebaseConfigured ? getDatabase(app) : null;
