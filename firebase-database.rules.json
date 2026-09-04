@@ -1,0 +1,53 @@
+{
+  "rules": {
+    "gifts": {
+      ".read": "auth != null",
+      ".write": false
+    },
+
+    "giftSlots": {
+      ".read": "auth != null",
+      "$giftId": {
+        "$slotId": {
+          ".write": "auth != null && data.exists() && newData.exists() && root.child('gifts').child($giftId).exists() && (
+            (data.child('claimedBy').val() === '' && newData.child('claimedBy').val() === auth.uid) ||
+            (data.child('claimedBy').val() === auth.uid && newData.child('claimedBy').val() === '')
+          )",
+          ".validate": "newData.hasChildren(['claimedBy', 'reservationId']) && newData.child('claimedBy').isString() && newData.child('reservationId').isString() && newData.child('claimedBy').val().length <= 128 && newData.child('reservationId').val().length <= 128 && (
+            (newData.child('claimedBy').val() === '' && newData.child('reservationId').val() === '') ||
+            (newData.child('claimedBy').val() === auth.uid && newData.child('reservationId').val().length >= 8)
+          )"
+        }
+      }
+    },
+
+    "userReservations": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$reservationId": {
+          ".write": "auth != null && auth.uid === $uid && (
+            (!data.exists() && newData.exists()) ||
+            (data.exists() && !newData.exists())
+          )",
+          ".validate": "!newData.exists() || (
+            newData.hasChildren(['giftId', 'giftName', 'quantity', 'guestName', 'createdAt']) &&
+            newData.child('giftId').isString() &&
+            newData.child('giftId').val().length > 0 &&
+            newData.child('giftName').isString() &&
+            newData.child('giftName').val().length > 0 &&
+            newData.child('giftName').val().length <= 120 &&
+            newData.child('quantity').isNumber() &&
+            newData.child('quantity').val() >= 1 &&
+            newData.child('quantity').val() <= root.child('gifts').child(newData.child('giftId').val()).child('total').val() &&
+            newData.child('guestName').isString() &&
+            newData.child('guestName').val().length >= 2 &&
+            newData.child('guestName').val().length <= 80 &&
+            newData.child('createdAt').isNumber() &&
+            root.child('gifts').child(newData.child('giftId').val()).exists() &&
+            root.child('gifts').child(newData.child('giftId').val()).child('active').val() === true
+          )"
+        }
+      }
+    }
+  }
+}
