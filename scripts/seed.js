@@ -8,7 +8,8 @@ import {
   buildSlotsRecord,
 } from "../src/seed-data.js";
 
-const PLACEHOLDER_DATABASE_URL = "PEGAR_AQUI_DATABASE_URL_REAL";
+const DEFAULT_DATABASE_URL =
+  "https://dulceespera-98785-default-rtdb.firebaseio.com";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = resolve(__dirname, "..");
 
@@ -51,7 +52,7 @@ function resolveDatabaseUrl() {
     process.env.FIREBASE_DATABASE_URL ||
     envLocal.VITE_FIREBASE_DATABASE_URL ||
     envLocal.FIREBASE_DATABASE_URL ||
-    PLACEHOLDER_DATABASE_URL
+    DEFAULT_DATABASE_URL
   );
 }
 
@@ -112,7 +113,7 @@ async function main() {
   const databaseURL = resolveDatabaseUrl();
   const serviceAccountPath = resolveServiceAccount();
 
-  if (!databaseURL || databaseURL === PLACEHOLDER_DATABASE_URL) {
+  if (!databaseURL) {
     printHelp();
     throw new Error(
       "Falta databaseURL. Pegalo en .env.local como VITE_FIREBASE_DATABASE_URL."

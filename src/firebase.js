@@ -2,7 +2,8 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getDatabase } from "firebase/database";
 
-const PLACEHOLDER_DATABASE_URL = "PEGAR_AQUI_DATABASE_URL_REAL";
+const DEFAULT_DATABASE_URL =
+  "https://dulceespera-98785-default-rtdb.firebaseio.com";
 const PLACEHOLDER_API_KEY = "PEGAR_AQUI_FIREBASE_API_KEY";
 
 function readEnv(name) {
@@ -21,8 +22,7 @@ const firebaseConfig = {
   storageBucket: "dulceespera-98785.firebasestorage.app",
   messagingSenderId: "549764450384",
   appId: "1:549764450384:web:b454c4111edff5f575a955",
-  // Pegá el databaseURL real en .env.local como VITE_FIREBASE_DATABASE_URL.
-  databaseURL: readEnv("VITE_FIREBASE_DATABASE_URL") || PLACEHOLDER_DATABASE_URL,
+  databaseURL: readEnv("VITE_FIREBASE_DATABASE_URL") || DEFAULT_DATABASE_URL,
 };
 
 export const isApiKeyConfigured = Boolean(
@@ -31,7 +31,6 @@ export const isApiKeyConfigured = Boolean(
 
 export const isDatabaseUrlConfigured = Boolean(
   firebaseConfig.databaseURL &&
-    firebaseConfig.databaseURL !== PLACEHOLDER_DATABASE_URL &&
     /^https:\/\/.+\.(firebaseio\.com|firebasedatabase\.app)$/.test(
       firebaseConfig.databaseURL
     )
@@ -39,7 +38,7 @@ export const isDatabaseUrlConfigured = Boolean(
 
 export const isFirebaseConfigured = isApiKeyConfigured && isDatabaseUrlConfigured;
 
-export { firebaseConfig, PLACEHOLDER_DATABASE_URL };
+export { firebaseConfig, DEFAULT_DATABASE_URL };
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
