@@ -3,10 +3,16 @@ import {
   get,
   onValue,
   ref,
+  set,
   update,
 } from "firebase/database";
 import { auth, database } from "./firebase.js";
 import { listFreeSlotIds, listOwnedSlotIds } from "./gifts.js";
+import {
+  INITIAL_GIFTS,
+  buildGiftsRecord,
+  buildSlotsRecord,
+} from "./seed-data.js";
 
 export const GUEST_NAME_KEY = "dulceespera_guest_name";
 
@@ -29,8 +35,29 @@ export async function ensureAnonymousUser() {
     return auth.currentUser;
   }
 
-  const credential = await signInAnonymously(auth);
+  const credential = await Promise.race([
+    signInAnonymously(auth),
+    new Promise((_, reject) => {
+      window.setTimeout(() => reject(new Error("AUTH_TIMEOUT")), 12000);
+    }),
+  ]);
   return credential.user;
+}
+
+export async function seedIfEmpty() {
+  const giftsSnap = await get(ref(database, "gifts"));
+  if (giftsSnap.exists()) {
+    return false;
+  }
+
+  try {
+    await set(ref(database, "gifts"), buildGiftsRecord(INITIAL_GIFTS));
+    await set(ref(database, "giftSlots"), buildSlotsRecord(INITIAL_GIFTS));
+    return true;
+  } catch (error) {
+    console.error("No se pudo hacer el seed inicial.", error);
+    throw error;
+  }
 }
 
 export function getCurrentUid() {

@@ -2,11 +2,12 @@
   "rules": {
     "gifts": {
       ".read": "auth != null",
-      ".write": false
+      ".write": "auth != null && !data.exists()"
     },
 
     "giftSlots": {
       ".read": "auth != null",
+      ".write": "auth != null && !data.exists()",
       "$giftId": {
         "$slotId": {
           ".write": "auth != null && data.exists() && newData.exists() && root.child('gifts').child($giftId).exists() && (

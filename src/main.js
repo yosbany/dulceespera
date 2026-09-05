@@ -7,6 +7,7 @@ import {
 } from "./gifts.js";
 import {
   ensureAnonymousUser,
+  seedIfEmpty,
   groupMyReservations,
   listenAuth,
   listenGiftSlots,
@@ -237,10 +238,19 @@ async function boot() {
 
   try {
     await ensureAnonymousUser();
+    try {
+      await seedIfEmpty();
+    } catch (seedError) {
+      console.error(seedError);
+    }
   } catch (error) {
     console.error(error);
     const code = String(error?.code || error?.message || "");
-    if (code.includes("admin-restricted-operation")) {
+    if (
+      code.includes("admin-restricted-operation") ||
+      code.includes("AUTH_TIMEOUT") ||
+      code.includes("unauthorized-domain")
+    ) {
       renderError(
         "Firebase bloqueó el ingreso anónimo. En Authentication → Sign-in method habilitá Anonymous, y en Authentication → Settings → Authorized domains agregá dulceespera.nrdonline.site."
       );
