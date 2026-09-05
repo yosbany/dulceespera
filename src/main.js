@@ -47,6 +47,7 @@ const state = {
   myReservations: {},
   guestsByGift: {},
   category: "all",
+  query: "",
   busy: false,
   giftsReady: false,
   slotsReady: false,
@@ -96,7 +97,17 @@ function friendlyAdminError(code) {
   }
 }
 
+function normalizeSearch(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .trim();
+}
+
 function currentGiftsView() {
+  const query = normalizeSearch(state.query);
+
   return state.gifts
     .map((gift) =>
       decorateGift(
@@ -105,7 +116,17 @@ function currentGiftsView() {
         state.myReservations[gift.id]?.quantity || 0
       )
     )
-    .filter((gift) => state.category === "all" || gift.category === state.category);
+    .filter((gift) => state.category === "all" || gift.category === state.category)
+    .filter((gift) => {
+      if (!query) {
+        return true;
+      }
+
+      const haystack = normalizeSearch(
+        `${gift.name} ${gift.description} ${gift.category}`
+      );
+      return haystack.includes(query);
+    });
 }
 
 function renderApp() {
@@ -455,6 +476,14 @@ function bindChrome() {
 
   document.getElementById("add-gift-button").addEventListener("click", openAddGift);
   document.getElementById("leave-button").addEventListener("click", leaveList);
+
+  const search = document.getElementById("gift-search");
+  const applySearch = () => {
+    state.query = search.value;
+    renderApp();
+  };
+  search.addEventListener("input", applySearch);
+  search.addEventListener("search", applySearch);
 
   document.getElementById("gate-form").addEventListener("submit", (event) => {
     event.preventDefault();

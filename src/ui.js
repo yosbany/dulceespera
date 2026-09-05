@@ -112,8 +112,8 @@ export function renderGiftList(gifts, onReserve, busy, admin = null) {
     const empty = document.createElement("p");
     empty.className = "empty-state";
     empty.textContent = admin
-      ? "No hay regalitos en esta categoría. Agregá uno nuevo si querés."
-      : "No hay regalitos en esta categoría por ahora.";
+      ? "No hay regalitos que coincidan. Probá otro término o categoría, o agregá uno nuevo."
+      : "No hay regalitos que coincidan. Probá otro término o categoría.";
     root.appendChild(empty);
     return;
   }

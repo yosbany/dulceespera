@@ -301,6 +301,32 @@ button:disabled {
   line-height: 1;
 }
 
+.gift-search {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-weight: 700;
+}
+
+.gift-search span {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.gift-search input {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text);
+}
+
+.gift-search input::placeholder {
+  color: var(--muted);
+}
+
 #filters {
   display: grid;
   grid-template-columns: 1fr 1fr;
