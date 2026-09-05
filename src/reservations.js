@@ -35,12 +35,7 @@ export async function ensureAnonymousUser() {
     return auth.currentUser;
   }
 
-  const credential = await Promise.race([
-    signInAnonymously(auth),
-    new Promise((_, reject) => {
-      window.setTimeout(() => reject(new Error("AUTH_TIMEOUT")), 12000);
-    }),
-  ]);
+  const credential = await signInAnonymously(auth);
   return credential.user;
 }
 

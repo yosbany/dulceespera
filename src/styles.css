@@ -71,6 +71,10 @@ button:disabled {
   padding: 20px 16px 48px;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .screen {
   min-height: 70vh;
   display: grid;
