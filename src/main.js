@@ -11,6 +11,8 @@ import {
   ensureAnonymousUser,
   seedIfEmpty,
   groupMyReservations,
+  groupReservationsByGift,
+  listenAllReservations,
   listenAuth,
   listenGiftSlots,
   listenGifts,
@@ -43,14 +45,17 @@ const state = {
   maxOrder: 0,
   slots: {},
   myReservations: {},
+  guestsByGift: {},
   category: "all",
   busy: false,
   giftsReady: false,
   slotsReady: false,
   reservationsReady: false,
+  guestsReady: false,
   unsubGifts: null,
   unsubSlots: null,
   unsubReservations: null,
+  unsubGuests: null,
 };
 
 function friendlyReserveError(code, remaining) {
@@ -104,7 +109,7 @@ function currentGiftsView() {
 }
 
 function renderApp() {
-  if (!state.giftsReady || !state.slotsReady || !state.reservationsReady) {
+  if (!state.giftsReady || !state.slotsReady || !state.reservationsReady || !state.guestsReady) {
     return;
   }
 
@@ -143,6 +148,7 @@ function renderApp() {
       ? {
           onRemove: openRemove,
           onRestore,
+          guestsByGift: state.guestsByGift,
         }
       : null
   );
@@ -323,6 +329,11 @@ function startDataListeners(uid) {
     state.unsubReservations();
   }
 
+  if (state.unsubGuests) {
+    state.unsubGuests();
+    state.unsubGuests = null;
+  }
+
   state.unsubGifts = listenGifts((snapshot, error) => {
     if (error) {
       renderError("No pudimos cargar los regalitos. Revisá tu conexión e intentá de nuevo.");
@@ -360,6 +371,28 @@ function startDataListeners(uid) {
 
     state.myReservations = groupMyReservations(snapshot.val() || {});
     state.reservationsReady = true;
+    renderApp();
+  });
+
+  if (!isAdmin()) {
+    state.guestsByGift = {};
+    state.guestsReady = true;
+    renderApp();
+    return;
+  }
+
+  state.guestsReady = false;
+  state.unsubGuests = listenAllReservations((snapshot, error) => {
+    if (error) {
+      console.error(error);
+      state.guestsByGift = {};
+      state.guestsReady = true;
+      renderApp();
+      return;
+    }
+
+    state.guestsByGift = groupReservationsByGift(snapshot.val() || {});
+    state.guestsReady = true;
     renderApp();
   });
 }
@@ -416,6 +449,7 @@ function bindChrome() {
     state.giftsReady = false;
     state.slotsReady = false;
     state.reservationsReady = false;
+    state.guestsReady = false;
     boot();
   });
 

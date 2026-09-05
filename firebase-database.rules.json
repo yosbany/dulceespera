@@ -47,6 +47,7 @@
     },
 
     "userReservations": {
+      ".read": "auth != null",
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
         "$reservationId": {

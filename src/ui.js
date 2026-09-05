@@ -175,6 +175,7 @@ export function renderGiftList(gifts, onReserve, busy, admin = null) {
         ${statusLabel}
       </p>
       ${progressHtml}
+      ${admin ? renderGuestList(admin.guestsByGift?.[gift.id] || [], gift.reserved) : ""}
       <div class="gift-actions">
         ${
           hidden
@@ -478,6 +479,32 @@ function openSheet({ title, body, actions, onOpen }) {
 
   document.addEventListener("keydown", onKeyDown);
   onOpen?.();
+}
+
+function renderGuestList(guests, reserved) {
+  if (!guests.length && reserved > 0) {
+    return `<p class="gift-guests-empty">Hay reservas, pero todavía no vemos los nombres. Publicá las reglas nuevas de Firebase.</p>`;
+  }
+
+  if (!guests.length) {
+    return "";
+  }
+
+  const title =
+    guests.length === 1 && guests[0].quantity === 1 ? "Lo eligió" : "Lo eligieron";
+  const items = guests
+    .map((guest) => {
+      const extra = guest.quantity > 1 ? ` · ${guest.quantity}` : "";
+      return `<li>${escapeHtml(guest.name)}${extra}</li>`;
+    })
+    .join("");
+
+  return `
+    <div class="gift-guests">
+      <p>${title}</p>
+      <ul>${items}</ul>
+    </div>
+  `;
 }
 
 function escapeHtml(value) {

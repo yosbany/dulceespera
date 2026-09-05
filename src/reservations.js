@@ -97,6 +97,13 @@ export function listenMyReservations(uid, callback) {
   });
 }
 
+export function listenAllReservations(callback) {
+  return onValue(ref(database, "userReservations"), callback, (error) => {
+    console.error("Error al escuchar todas las reservas.", error);
+    callback(null, error);
+  });
+}
+
 function createReservationId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return `res_${crypto.randomUUID()}`;
@@ -135,6 +142,37 @@ export function groupMyReservations(reservationsValue = {}) {
   });
 
   return grouped;
+}
+
+export function groupReservationsByGift(allUsersValue = {}) {
+  const merged = {};
+
+  Object.values(allUsersValue || {}).forEach((userReservations) => {
+    Object.values(userReservations || {}).forEach((reservation) => {
+      const giftId = reservation?.giftId;
+      const name = String(reservation?.guestName || "").trim();
+      const quantity = Number(reservation?.quantity) || 0;
+
+      if (!giftId || !name || quantity < 1) {
+        return;
+      }
+
+      if (!merged[giftId]) {
+        merged[giftId] = {};
+      }
+
+      merged[giftId][name] = (merged[giftId][name] || 0) + quantity;
+    });
+  });
+
+  return Object.fromEntries(
+    Object.entries(merged).map(([giftId, names]) => [
+      giftId,
+      Object.entries(names)
+        .map(([name, quantity]) => ({ name, quantity }))
+        .sort((left, right) => left.name.localeCompare(right.name, "es")),
+    ])
+  );
 }
 
 export async function reserveGift({ gift, slots, quantity, guestName }) {

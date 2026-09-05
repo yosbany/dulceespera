@@ -424,6 +424,41 @@ button:disabled {
   font-size: 14px;
 }
 
+.gift-guests {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--purple-soft);
+}
+
+.gift-guests p {
+  margin: 0 !important;
+  color: var(--text) !important;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.gift-guests ul {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gift-guests li {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.gift-guests-empty {
+  margin: 12px 0 0 !important;
+  color: #8a445c !important;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .gift-actions {
   display: flex;
   flex-wrap: wrap;
