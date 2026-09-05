@@ -1,0 +1,17 @@
+{
+  "name": "Dulce Espera - Anisley & Maikol",
+  "short_name": "Dulce Espera",
+  "start_url": "./",
+  "display": "standalone",
+  "theme_color": "#f2b8cc",
+  "background_color": "#fffaf6",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
