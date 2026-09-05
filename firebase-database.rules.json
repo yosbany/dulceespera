@@ -2,17 +2,41 @@
   "rules": {
     "gifts": {
       ".read": "auth != null",
-      ".write": "auth != null && !data.exists()"
+      ".write": "auth != null && !data.exists()",
+      "$giftId": {
+        ".write": "auth != null",
+        ".validate": "!newData.exists() || (
+          newData.hasChildren(['category', 'name', 'description', 'total', 'active', 'order']) &&
+          newData.child('category').isString() &&
+          newData.child('category').val().length > 0 &&
+          newData.child('category').val().length <= 40 &&
+          newData.child('name').isString() &&
+          newData.child('name').val().length >= 2 &&
+          newData.child('name').val().length <= 80 &&
+          newData.child('description').isString() &&
+          newData.child('description').val().length >= 2 &&
+          newData.child('description').val().length <= 160 &&
+          newData.child('total').isNumber() &&
+          newData.child('total').val() >= 1 &&
+          newData.child('total').val() <= 50 &&
+          newData.child('active').isBoolean() &&
+          newData.child('order').isNumber()
+        )"
+      }
     },
 
     "giftSlots": {
       ".read": "auth != null",
       ".write": "auth != null && !data.exists()",
       "$giftId": {
+        ".write": "auth != null && (!data.exists() || !newData.exists())",
         "$slotId": {
-          ".write": "auth != null && data.exists() && newData.exists() && root.child('gifts').child($giftId).exists() && (
-            (data.child('claimedBy').val() === '' && newData.child('claimedBy').val() === auth.uid) ||
-            (data.child('claimedBy').val() === auth.uid && newData.child('claimedBy').val() === '')
+          ".write": "auth != null && (
+            (!data.exists() && newData.exists() && newData.child('claimedBy').val() === '' && newData.child('reservationId').val() === '') ||
+            (data.exists() && newData.exists() && root.child('gifts').child($giftId).exists() && (
+              (data.child('claimedBy').val() === '' && newData.child('claimedBy').val() === auth.uid) ||
+              (data.child('claimedBy').val() === auth.uid && newData.child('claimedBy').val() === '')
+            ))
           )",
           ".validate": "newData.hasChildren(['claimedBy', 'reservationId']) && newData.child('claimedBy').isString() && newData.child('reservationId').isString() && newData.child('claimedBy').val().length <= 128 && newData.child('reservationId').val().length <= 128 && (
             (newData.child('claimedBy').val() === '' && newData.child('reservationId').val() === '') ||

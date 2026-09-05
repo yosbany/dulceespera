@@ -36,6 +36,7 @@ jobs:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_DATABASE_URL: ${{ secrets.VITE_FIREBASE_DATABASE_URL }}
           VITE_ACCESS_CODE: ${{ secrets.VITE_ACCESS_CODE }}
+          VITE_ADMIN_CODE: ${{ secrets.VITE_ADMIN_CODE }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

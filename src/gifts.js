@@ -59,7 +59,7 @@ export function listOwnedSlotIds(slots, uid, reservationIds = null) {
   });
 }
 
-export function normalizeGifts(giftsValue = {}) {
+export function normalizeGifts(giftsValue = {}, { includeInactive = false } = {}) {
   return Object.entries(giftsValue)
     .map(([id, gift]) => ({
       id,
@@ -70,7 +70,7 @@ export function normalizeGifts(giftsValue = {}) {
       active: gift.active !== false,
       order: Number(gift.order) || 999,
     }))
-    .filter((gift) => gift.active)
+    .filter((gift) => includeInactive || gift.active)
     .sort((left, right) => left.order - right.order);
 }
 

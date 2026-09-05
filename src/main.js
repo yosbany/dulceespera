@@ -1,4 +1,5 @@
-import { grantAccess, hasAccess } from "./access.js";
+import { clearAccess, grantAccess, hasAccess, isAdmin } from "./access.js";
+import { createGift, removeGift, restoreGift } from "./admin.js";
 import "./firebase.js";
 import {
   countAvailableTypes,
@@ -19,8 +20,11 @@ import {
 } from "./reservations.js";
 import {
   closeSheet,
+  openAdminGiftSheet,
   openReleaseSheet,
+  openRemoveGiftSheet,
   openReserveSheet,
+  renderAdminBar,
   renderError,
   renderFilters,
   renderGiftList,
@@ -35,6 +39,8 @@ const state = {
   uid: "",
   gifts: [],
   giftsById: {},
+  allGiftIds: [],
+  maxOrder: 0,
   slots: {},
   myReservations: {},
   category: "all",
@@ -72,6 +78,19 @@ function friendlyReserveError(code, remaining) {
   }
 }
 
+function friendlyAdminError(code) {
+  switch (code) {
+    case "NAME":
+      return "El nombre del regalito tiene que tener entre 2 y 80 letras.";
+    case "DESCRIPTION":
+      return "La descripción tiene que tener entre 2 y 160 letras.";
+    case "CATEGORY":
+      return "Elegí una categoría.";
+    default:
+      return "No pudimos guardar el cambio. Si acabás de publicar las reglas de Firebase, recargá e intentá de nuevo.";
+  }
+}
+
 function currentGiftsView() {
   return state.gifts
     .map((gift) =>
@@ -89,7 +108,9 @@ function renderApp() {
     return;
   }
 
-  if (!state.gifts.length) {
+  const admin = isAdmin();
+
+  if (!state.gifts.length && !admin) {
     renderError("Los regalitos todavía se están preparando. En un ratito ya van a estar listos.");
     return;
   }
@@ -102,8 +123,9 @@ function renderApp() {
     )
   );
 
+  renderAdminBar(admin);
   renderStats({
-    availableTypes: countAvailableTypes(decorated),
+    availableTypes: countAvailableTypes(decorated.filter((gift) => gift.active)),
     chosenUnits: countChosenUnits(state.slots),
   });
 
@@ -113,12 +135,22 @@ function renderApp() {
   });
 
   renderMyGifts(state.myReservations, state.giftsById, openRelease, state.busy);
-  renderGiftList(currentGiftsView(), openReserve, state.busy);
+  renderGiftList(
+    currentGiftsView(),
+    openReserve,
+    state.busy,
+    admin
+      ? {
+          onRemove: openRemove,
+          onRestore,
+        }
+      : null
+  );
   showScreen("main");
 }
 
 function openReserve(gift) {
-  if (state.busy || gift.remaining <= 0) {
+  if (state.busy || gift.active === false || gift.remaining <= 0) {
     return;
   }
 
@@ -174,7 +206,7 @@ function openRelease(item) {
         showToast(`✓ ${result.giftName} vuelve a estar disponible. 🩷🩵`);
       } catch (error) {
         console.error(error);
-        showToast("No pudimos quitar la reserva. Intentá otra vez.");
+        showToast("No pudimos quitar la reserva. Intentá de nuevo.");
         throw error;
       } finally {
         state.busy = false;
@@ -184,6 +216,98 @@ function openRelease(item) {
     },
     closeSheet
   );
+}
+
+function openAddGift() {
+  if (state.busy || !isAdmin()) {
+    return;
+  }
+
+  openAdminGiftSheet(async (payload) => {
+    state.busy = true;
+    setBusyState(true);
+
+    try {
+      const result = await createGift({
+        ...payload,
+        existingIds: state.allGiftIds,
+        order: state.maxOrder + 1,
+      });
+      closeSheet();
+      showToast(`✓ Agregamos ${result.giftName}.`);
+    } catch (error) {
+      console.error(error);
+      showToast(friendlyAdminError(error.message));
+      throw error;
+    } finally {
+      state.busy = false;
+      setBusyState(false);
+      renderApp();
+    }
+  }, closeSheet);
+}
+
+function openRemove(gift) {
+  if (state.busy || !isAdmin()) {
+    return;
+  }
+
+  const decorated = decorateGift(
+    gift,
+    state.slots[gift.id],
+    state.myReservations[gift.id]?.quantity || 0
+  );
+
+  openRemoveGiftSheet(
+    decorated,
+    async () => {
+      state.busy = true;
+      setBusyState(true);
+
+      try {
+        const result = await removeGift({
+          gift,
+          slots: state.slots[gift.id],
+        });
+        closeSheet();
+        showToast(
+          result.hidden
+            ? `✓ ${result.giftName} quedó oculto para los invitados.`
+            : `✓ Quitamos ${result.giftName}.`
+        );
+      } catch (error) {
+        console.error(error);
+        showToast(friendlyAdminError(error.message));
+        throw error;
+      } finally {
+        state.busy = false;
+        setBusyState(false);
+        renderApp();
+      }
+    },
+    closeSheet
+  );
+}
+
+async function onRestore(gift) {
+  if (state.busy || !isAdmin()) {
+    return;
+  }
+
+  state.busy = true;
+  setBusyState(true);
+
+  try {
+    const result = await restoreGift(gift);
+    showToast(`✓ ${result.giftName} volvió a la lista.`);
+  } catch (error) {
+    console.error(error);
+    showToast(friendlyAdminError(error.message));
+  } finally {
+    state.busy = false;
+    setBusyState(false);
+    renderApp();
+  }
 }
 
 function startDataListeners(uid) {
@@ -205,7 +329,13 @@ function startDataListeners(uid) {
       return;
     }
 
-    state.gifts = normalizeGifts(snapshot.val() || {});
+    const raw = snapshot.val() || {};
+    state.allGiftIds = Object.keys(raw);
+    state.maxOrder = Math.max(
+      0,
+      ...Object.values(raw).map((gift) => Number(gift?.order) || 0)
+    );
+    state.gifts = normalizeGifts(raw, { includeInactive: isAdmin() });
     state.giftsById = Object.fromEntries(state.gifts.map((gift) => [gift.id, gift]));
     state.giftsReady = true;
     renderApp();
@@ -276,6 +406,11 @@ function startApp() {
   boot();
 }
 
+function leaveList() {
+  clearAccess();
+  window.location.reload();
+}
+
 function bindChrome() {
   document.getElementById("retry-button").addEventListener("click", () => {
     state.giftsReady = false;
@@ -283,6 +418,9 @@ function bindChrome() {
     state.reservationsReady = false;
     boot();
   });
+
+  document.getElementById("add-gift-button").addEventListener("click", openAddGift);
+  document.getElementById("leave-button").addEventListener("click", leaveList);
 
   document.getElementById("gate-form").addEventListener("submit", (event) => {
     event.preventDefault();

@@ -95,35 +95,51 @@ export function renderMyGifts(groups, giftsById, onSelect, busy) {
     });
 }
 
-export function renderGiftList(gifts, onReserve, busy) {
+export function renderAdminBar(admin) {
+  const bar = document.getElementById("admin-bar");
+  if (!bar) {
+    return;
+  }
+
+  bar.hidden = !admin;
+}
+
+export function renderGiftList(gifts, onReserve, busy, admin = null) {
   const root = document.getElementById("gift-list");
   root.innerHTML = "";
 
   if (!gifts.length) {
     const empty = document.createElement("p");
     empty.className = "empty-state";
-    empty.textContent = "No hay regalitos en esta categoría por ahora.";
+    empty.textContent = admin
+      ? "No hay regalitos en esta categoría. Agregá uno nuevo si querés."
+      : "No hay regalitos en esta categoría por ahora.";
     root.appendChild(empty);
     return;
   }
 
   gifts.forEach((gift) => {
     const article = document.createElement("article");
-    article.className = "gift-card";
+    article.className = `gift-card${gift.active === false ? " is-inactive" : ""}`;
     article.dataset.giftId = gift.id;
 
     const chosen = gift.myReserved > 0;
-    const completed = gift.remaining <= 0;
-    const statusLabel = completed
-      ? "Completado"
-      : chosen
-        ? "Elegido por vos"
-        : "Disponible";
-    const statusClass = completed
-      ? "is-done"
-      : chosen
-        ? "is-mine"
-        : "is-available";
+    const hidden = gift.active === false;
+    const completed = !hidden && gift.remaining <= 0;
+    const statusLabel = hidden
+      ? "Oculto para invitados"
+      : completed
+        ? "Completado"
+        : chosen
+          ? "Elegido por vos"
+          : "Disponible";
+    const statusClass = hidden
+      ? "is-hidden"
+      : completed
+        ? "is-done"
+        : chosen
+          ? "is-mine"
+          : "is-available";
     const actionLabel = completed
       ? "Completado"
       : chosen
@@ -140,6 +156,12 @@ export function renderGiftList(gifts, onReserve, busy) {
         `
         : `<p class="gift-remaining">${completed ? "Ya fue elegido" : "Queda 1 disponible"}</p>`;
 
+    const adminActions = admin
+      ? hidden
+        ? `<button type="button" class="ghost-button admin-restore" ${busy ? "disabled" : ""}>Mostrar de nuevo</button>`
+        : `<button type="button" class="danger-button admin-remove" ${busy ? "disabled" : ""}>Quitar</button>`
+      : "";
+
     article.innerHTML = `
       <div class="gift-top">
         <span class="gift-icon" aria-hidden="true">${getCategoryIcon(gift.category)}</span>
@@ -149,19 +171,31 @@ export function renderGiftList(gifts, onReserve, busy) {
         </div>
       </div>
       <p class="gift-status ${statusClass}">
-        <span aria-hidden="true">${completed ? "●" : "✓"}</span>
+        <span aria-hidden="true">${hidden ? "●" : completed ? "●" : "✓"}</span>
         ${statusLabel}
       </p>
       ${progressHtml}
       <div class="gift-actions">
-        <button type="button" class="primary-button gift-choose" ${completed || busy ? "disabled" : ""}>
+        ${
+          hidden
+            ? ""
+            : `<button type="button" class="primary-button gift-choose" ${completed || busy ? "disabled" : ""}>
           ${actionLabel}
-        </button>
+        </button>`
+        }
+        ${adminActions}
       </div>
     `;
 
     const chooseButton = article.querySelector(".gift-choose");
-    chooseButton.addEventListener("click", () => onReserve(gift));
+    chooseButton?.addEventListener("click", () => onReserve(gift));
+
+    const removeButton = article.querySelector(".admin-remove");
+    removeButton?.addEventListener("click", () => admin.onRemove(gift));
+
+    const restoreButton = article.querySelector(".admin-restore");
+    restoreButton?.addEventListener("click", () => admin.onRestore(gift));
+
     root.appendChild(article);
   });
 }
@@ -251,6 +285,90 @@ export function openReleaseSheet(item, onConfirm, onClose) {
   });
 }
 
+export function openAdminGiftSheet(onConfirm, onClose) {
+  const categoryOptions = CATEGORIES.map(
+    (category) => `<option value="${escapeAttribute(category)}">${escapeHtml(category)}</option>`
+  ).join("");
+
+  openSheet({
+    title: "Agregar regalito",
+    body: `
+      <label class="field" for="admin-category">
+        <span>Categoría</span>
+        <select id="admin-category">${categoryOptions}</select>
+      </label>
+      <label class="field" for="admin-name">
+        <span>Nombre</span>
+        <input id="admin-name" type="text" maxlength="80" />
+      </label>
+      <label class="field" for="admin-description">
+        <span>Descripción</span>
+        <input id="admin-description" type="text" maxlength="160" />
+      </label>
+      <label class="field" for="admin-total">
+        <span>¿Cuántas unidades?</span>
+        <input id="admin-total" type="number" min="1" max="50" value="1" />
+      </label>
+    `,
+    actions: [
+      { label: "Cancelar", kind: "ghost", onClick: onClose },
+      {
+        label: "Guardar",
+        kind: "primary",
+        onClick: async (_close, setBusy) => {
+          setBusy(true);
+          try {
+            await onConfirm({
+              category: document.getElementById("admin-category").value,
+              name: document.getElementById("admin-name").value,
+              description: document.getElementById("admin-description").value,
+              total: document.getElementById("admin-total").value,
+            });
+          } catch {
+            setBusy(false);
+          }
+        },
+      },
+    ],
+    onOpen: () => {
+      document.getElementById("admin-name")?.focus();
+    },
+  });
+}
+
+export function openRemoveGiftSheet(gift, onConfirm, onClose) {
+  const reserved = gift.reserved || 0;
+  const copy =
+    reserved > 0
+      ? reserved === 1
+        ? "Alguien ya reservó este regalito. No lo borramos: queda oculto para los invitados."
+        : `Hay ${reserved} reservas. No lo borramos: queda oculto para los invitados.`
+      : "Nadie lo reservó todavía. Se va a borrar de la lista.";
+
+  openSheet({
+    title: "Quitar regalito",
+    body: `
+      <p class="sheet-gift">${escapeHtml(gift.name)}</p>
+      <p class="sheet-copy">${copy}</p>
+    `,
+    actions: [
+      { label: "No, volver", kind: "ghost", onClick: onClose },
+      {
+        label: reserved > 0 ? "Ocultar" : "Borrar",
+        kind: "danger",
+        onClick: async (_close, setBusy) => {
+          setBusy(true);
+          try {
+            await onConfirm();
+          } catch {
+            setBusy(false);
+          }
+        },
+      },
+    ],
+  });
+}
+
 export function closeSheet() {
   const root = document.getElementById("sheet-root");
   const overlay = root.querySelector(".sheet-overlay");
@@ -287,19 +405,21 @@ export function showToast(message) {
 }
 
 export function setBusyState(busy) {
-  document.querySelectorAll(".gift-choose, .my-gift").forEach((button) => {
-    if (busy) {
-      button.disabled = true;
-      return;
-    }
+  document
+    .querySelectorAll(".gift-choose, .my-gift, .admin-remove, .admin-restore, #add-gift-button")
+    .forEach((button) => {
+      if (busy) {
+        button.disabled = true;
+        return;
+      }
 
-    if (button.classList.contains("gift-choose") && button.textContent.includes("Completado")) {
-      button.disabled = true;
-      return;
-    }
+      if (button.classList.contains("gift-choose") && button.textContent.includes("Completado")) {
+        button.disabled = true;
+        return;
+      }
 
-    button.disabled = false;
-  });
+      button.disabled = false;
+    });
 }
 
 function openSheet({ title, body, actions, onOpen }) {
