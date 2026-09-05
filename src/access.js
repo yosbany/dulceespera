@@ -4,7 +4,7 @@ export const ACCESS_CODE = String(
   (typeof import.meta !== "undefined" &&
     import.meta.env &&
     import.meta.env.VITE_ACCESS_CODE) ||
-    ""
+    "anisleymaikol"
 )
   .trim()
   .toLowerCase();
