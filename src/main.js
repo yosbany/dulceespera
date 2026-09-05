@@ -1,4 +1,4 @@
-import { isFirebaseConfigured } from "./firebase.js";
+import "./firebase.js";
 import {
   countAvailableTypes,
   countChosenUnits,
@@ -235,11 +235,6 @@ function startDataListeners(uid) {
 async function boot() {
   showScreen("boot");
 
-  if (!isFirebaseConfigured) {
-    showScreen("setup");
-    return;
-  }
-
   try {
     await ensureAnonymousUser();
   } catch (error) {
@@ -267,10 +262,6 @@ function bindChrome() {
 }
 
 listenAuth((user) => {
-  if (!isFirebaseConfigured) {
-    return;
-  }
-
   if (!user) {
     return;
   }
