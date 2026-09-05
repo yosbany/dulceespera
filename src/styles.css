@@ -83,6 +83,18 @@ button:disabled {
   padding: 32px 12px;
 }
 
+.gate-form {
+  width: min(100%, 360px);
+  margin: 20px auto 0;
+  text-align: left;
+}
+
+.gate-error {
+  margin: 12px 0 0;
+  color: #8a445c;
+  font-weight: 700;
+}
+
 .boot-icon,
 .setup-icon {
   font-size: 48px;

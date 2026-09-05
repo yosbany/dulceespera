@@ -8,9 +8,10 @@
     />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta name="theme-color" content="#f2b8cc" />
+    <meta name="robots" content="noindex, nofollow" />
     <meta
       name="description"
-      content="Baby Shower de Anisley y Maikol. Elegí un regalito para acompañarlos en esta dulce espera."
+      content="Baby Shower de Anisley y Maikol. Elegí un regalito para acompañarlos en esta hermosa espera."
     />
     <title>Baby Shower - Anisley & Maikol</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -32,6 +33,31 @@
         <div>
           <div class="boot-icon" aria-hidden="true">🧸</div>
           <p>Preparando los regalitos...</p>
+        </div>
+      </div>
+
+      <div id="gate-screen" class="screen" hidden>
+        <div>
+          <div class="boot-icon" aria-hidden="true">🎁</div>
+          <h1>Baby Shower</h1>
+          <p class="setup-copy">
+            Esta lista es solo para familiares y amigos de Anisley y Maikol.
+          </p>
+          <form id="gate-form" class="gate-form">
+            <label class="field" for="access-code">
+              <span>Código de invitación</span>
+              <input
+                id="access-code"
+                name="accessCode"
+                type="text"
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+              />
+            </label>
+            <p id="gate-error" class="gate-error" hidden>Ese código no es correcto.</p>
+            <button type="submit" class="primary-button">Entrar</button>
+          </form>
         </div>
       </div>
 

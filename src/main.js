@@ -1,3 +1,4 @@
+import { grantAccess, hasAccess } from "./access.js";
 import "./firebase.js";
 import {
   countAvailableTypes,
@@ -262,6 +263,19 @@ async function boot() {
   }
 }
 
+function startApp() {
+  listenAuth((user) => {
+    if (!user) {
+      return;
+    }
+
+    state.uid = user.uid;
+    startDataListeners(user.uid);
+  });
+
+  boot();
+}
+
 function bindChrome() {
   document.getElementById("retry-button").addEventListener("click", () => {
     state.giftsReady = false;
@@ -269,16 +283,29 @@ function bindChrome() {
     state.reservationsReady = false;
     boot();
   });
+
+  document.getElementById("gate-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const input = document.getElementById("access-code");
+    const error = document.getElementById("gate-error");
+
+    if (grantAccess(input.value)) {
+      error.hidden = true;
+      showScreen("boot");
+      startApp();
+      return;
+    }
+
+    error.hidden = false;
+    input.focus();
+    input.select();
+  });
 }
 
-listenAuth((user) => {
-  if (!user) {
-    return;
-  }
-
-  state.uid = user.uid;
-  startDataListeners(user.uid);
-});
-
 bindChrome();
-boot();
+
+if (hasAccess()) {
+  startApp();
+} else {
+  showScreen("gate");
+}

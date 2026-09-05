@@ -7,11 +7,13 @@ export function showScreen(name) {
   const boot = document.getElementById("boot-screen");
   const error = document.getElementById("error-screen");
   const setup = document.getElementById("setup-screen");
+  const gate = document.getElementById("gate-screen");
   const main = document.getElementById("main");
 
   boot.hidden = name !== "boot";
   error.hidden = name !== "error";
   setup.hidden = name !== "setup";
+  gate.hidden = name !== "gate";
   main.hidden = name !== "main";
 }
 
