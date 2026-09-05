@@ -4,7 +4,7 @@ export const ACCESS_CODE = String(
   (typeof import.meta !== "undefined" &&
     import.meta.env &&
     import.meta.env.VITE_ACCESS_CODE) ||
-    "anisleymaikol"
+    ""
 )
   .trim()
   .toLowerCase();
@@ -20,7 +20,7 @@ export function hasAccess() {
 export function grantAccess(input) {
   const typed = String(input || "").trim().toLowerCase();
 
-  if (!typed || typed !== ACCESS_CODE) {
+  if (!ACCESS_CODE || !typed || typed !== ACCESS_CODE) {
     return false;
   }
 
